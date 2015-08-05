@@ -11,9 +11,10 @@
 #include "shader_util.hpp"
 #include "snake.h"
 
-#define GLFW_FRAME_INTERVAL 0.1
-#define SNAKE_SCALE 0.001
+#define GLFW_FRAME_INTERVAL 1
+#define SNAKE_SCALE 1
 
+GLFWwindow* window;
 snake_t mySnake;
 GLuint shaderProgram;
 GLuint vbo, vao;
@@ -54,6 +55,31 @@ void updateCallback() {
         points[i] = 1.0; i++;
     }
     
+    //Ask GL for a Vertex Buffer Object (vbo)
+    glGenBuffers (1, &vbo);
+    //Set it as the current buffer to be used by binding it
+    glBindBuffer (GL_ARRAY_BUFFER, vbo);
+    //Copy the points into the current buffer - 9 float values, start pointer and static data
+    glBufferData (GL_ARRAY_BUFFER, 18 * snakeQueue.size() * sizeof (float), points, GL_STATIC_DRAW);
+    
+    //Ask GL for a Vertex Attribute Object (vao)
+    glGenVertexArrays (1, &vao);
+    //Set it as the current array to be used by binding it
+    glBindVertexArray (vao);
+    //Enable the vertex attribute
+    glEnableVertexAttribArray (0);
+    //This the layout of our first vertex buffer
+    //"0" means define the layout for attribute number 0. "3" means that the variables are vec3 made from every 3 floats
+    glVertexAttribPointer (0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+    
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glUseProgram(shaderProgram);
+    glBindVertexArray (vao);
+    
+    // Draw points 0-3 from the currently bound VAO with current in-use shader
+    glDrawArrays(GL_TRIANGLES, 0, 2*snakeQueue.size());
+    
+    glfwSwapBuffers(window);
     
     // Update snake
     mySnake.updateSnake();
@@ -91,8 +117,6 @@ void initShadersGL(void) {
 }
 
 int main() {
-    
-    GLFWwindow* window;
     
     if(!glfwInit())
         exit(0);
